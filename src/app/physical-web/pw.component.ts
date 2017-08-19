@@ -1,43 +1,27 @@
-import { Component, OnInit } from '@angular/core';
-import { DataSource } from '@angular/cdk';
-import { MdSort } from '@angular/material';
-import { Observable, BehaviorSubject } from 'rxjs/Rx';
-
-import {
-  Pw,
-  PwService,
-} from '../shared';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ReplaySubject } from 'rxjs/Rx';
+import { AngularFireAuth } from 'angularfire2/auth';
 
 @Component({
   selector: 'app-pw',
   templateUrl: 'pw.component.html',
-  styleUrls: ['pw.component.scss'],
 })
-export class PwComponent implements OnInit {
-  dataSource: PwDataSource;
-  displayedColumns = ['title', 'shortUrl', 'createdAt', 'beacon'];
+export class PwComponent implements OnInit, OnDestroy {
+  destroy: ReplaySubject<any> = new ReplaySubject();
 
-  pws: Observable<Pw[]>; // That's not the table data. It's only used to count entries to get to
-                         // know when to display the info message.
+  isSignedIn: boolean;
 
   constructor(
-    private pwService: PwService,
+    private afAuth: AngularFireAuth,
   ) { }
 
   ngOnInit() {
-    this.pws = this.pwService.readPws();
-    this.dataSource = new PwDataSource(this.pws);
-  }
-}
-
-class PwDataSource extends DataSource<Pw> {
-  constructor(private pws: Observable<Pw[]>) {
-    super();
+    this.afAuth.authState
+      .takeUntil(this.destroy)
+      .subscribe(user => this.isSignedIn = !!user);
   }
 
-  connect(): Observable<Pw[]> {
-    return this.pws;
+  ngOnDestroy() {
+    this.destroy.next(true);
   }
-
-  disconnect() { }
 }

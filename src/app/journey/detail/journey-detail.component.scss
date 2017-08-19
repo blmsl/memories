@@ -1,18 +1,26 @@
-@import "../../shared/index";
+@import "../../shared/scss/conf/index";
 
 :host {
   width: 100%;
 }
 
-.avatar {
-  @extend .rounded-full;
-  @include bg-image();
-  width: 64px;
-  height: 64px;
-  border: 3px solid #abcff9;
+.avatar-container {
+  @include rounded-full();
+  @include full-center-children();
+  background: linear-gradient(to bottom, rgba(113, 175, 249, 0.75) 0%, rgba(0, 150, 136, 0.75) 100%);
   margin-top: -32px;
   margin-left: auto;
   margin-right: auto;
+  width: 70px;
+  height: 70px;
+}
+
+.avatar {
+  @include rounded-full();
+  @include bg-image();
+  cursor: pointer;
+  width: 64px;
+  height: 64px;
 }
 
 .journey-detail-page {
@@ -56,4 +64,24 @@
 
 .story-new {
   margin-bottom: 25px;
+}
+
+/**
+ * Edit 
+ */
+
+.content__banner.active {
+  cursor: pointer;
+}
+
+.file-input {
+  display: none;
+}
+
+.title-container {
+  margin-bottom: 0.34em;
+}
+
+.title-input {
+  font-size: 2em;
 }

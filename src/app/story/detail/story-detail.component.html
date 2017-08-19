@@ -1,10 +1,25 @@
+<app-story-detail-cast
+  [story]="story"
+  [owner]="owner"
+  *ngIf="(castServer | async) && story && owner">
+</app-story-detail-cast>
+
 <app-story-detail-banner
   [story]="story"
   [editState]="editState"
   (pending)="setPending('banner')"
   (unpending)="setUnpending('banner')">
 </app-story-detail-banner>
-<div class="avatar" [style.backgroundImage]="'url(' + owner?.photoURL + ')'"></div>
+
+<div class="avatar-container">
+  <div
+    class="avatar"
+    [style.backgroundImage]="'url(' + owner?.photoURL + ')'"
+    [mdTooltip]="owner?.displayName"
+    [mdTooltipPosition]="'below'"
+    [routerLink]="['/users/' + owner?.$key]">
+  </div>
+</div>
 
 <div class="page story-detail-page">
   <div class="container">
@@ -16,9 +31,16 @@
         (unpending)="setUnpending('title')">
       </app-story-detail-title>
       <div class="buttons">
-        <a (click)="edit()" *ngIf="!isEditing()" md-button>Edit</a>
+        <a (click)="edit()" *ngIf="!isEditing() && isSignedUserTheOwner()" md-button>Edit</a>
         <a (click)="cancel()" *ngIf="isEditing()" [disabled]="!isActivelyEditing()" md-button>Cancel</a>
         <a (click)="save()" *ngIf="isEditing()" [disabled]="!isActivelyEditing()" md-button>Save</a>
+        <a class="menu-button" md-button [mdMenuTriggerFor]="detailMenu">
+          <i class="fa fa-ellipsis-v"></i>
+        </a>
+        <md-menu #detailMenu="mdMenu">
+          <a md-menu-item (click)="delete()" *ngIf="!isEditing() && isSignedUserTheOwner()">Delete</a>
+          <a md-menu-item appPwNew>Physical Web</a>
+        </md-menu>
       </div>
     </div>
 
@@ -29,7 +51,12 @@
       (unpending)="setUnpending('date')">
     </app-story-detail-date>
 
-    <app-story-detail-photo [story]="story" [isEditing]="false"></app-story-detail-photo>
+    <app-story-detail-photo
+      [story]="story"
+      [editState]="editState"
+      (pending)="setPending('photos')"
+      (unpending)="setUnpending('photos')">
+    </app-story-detail-photo>
     
     <div class="box description">
       <app-story-detail-description
@@ -41,7 +68,7 @@
     </div>
     
     <h2>Location</h2>
-    <div class="box unspaced">
+    <div class="box map unspaced">
       <app-story-detail-map
         [story]="story"
         [editState]="editState"
@@ -49,5 +76,10 @@
         (unpending)="setUnpending('map')">
       </app-story-detail-map>
     </div>
+
+    <h2>Comments</h2>
+    <app-story-detail-comment
+      [story]="story">
+    </app-story-detail-comment>
   </div>
 </div>

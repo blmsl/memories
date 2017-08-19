@@ -13,8 +13,16 @@ export class Story extends Base {
   };
   coverURL: string;
   photos: {
-    url: string;
-    title: string;
+    [uid: string]: {
+      url: string;
+      title?: string;
+    },
+  };
+  videos: {
+    [uid: string]: {
+      id: string,
+      type: string,
+    }
   };
 
   isGeolocalized(): boolean {

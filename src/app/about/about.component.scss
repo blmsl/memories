@@ -1,0 +1,35 @@
+h2 {
+  margin-top: 2rem;
+}
+
+img {
+  max-width: 100%;
+}
+
+.image-block {
+  display: block;
+  text-align: center;
+  
+  > img {
+    max-height: 300px;
+  }
+}
+
+img.physical-web {
+  float: right;
+  width: 400px;
+}
+
+.physical-web-logos > img {
+  height: 44px;
+}
+
+.gsoc-container {
+  text-align: center;
+}
+
+img.gsoc {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  width: 400px;
+}

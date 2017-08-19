@@ -1,8 +1,12 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MdSnackBar } from '@angular/material';
-import { Observable, BehaviorSubject } from 'rxjs/Rx';
+import {
+  MdSnackBar,
+  MdDialog,
+} from '@angular/material';
+import { Observable, Subject, BehaviorSubject, ReplaySubject } from 'rxjs/Rx';
 import * as firebase from 'firebase';
+import { LiquidGalaxyServer } from 'liquid-galaxy';
 
 import {
   User,
@@ -10,6 +14,8 @@ import {
   Story,
   StoryService,
 } from '../../shared';
+import { CastService } from '../../parts/cast';
+import { ConfirmComponent } from '../../parts/confirm';
 import { EditState } from './edit-state';
 
 @Component({
@@ -17,12 +23,18 @@ import { EditState } from './edit-state';
   templateUrl: 'story-detail.component.html',
   styleUrls: ['story-detail.component.scss'],
 })
-export class StoryDetailComponent implements OnInit {
+export class StoryDetailComponent implements OnInit, OnDestroy {
+  destroy: ReplaySubject<any> = new ReplaySubject();
+
   story: Story;
   owner: User; // Story owner.
 
+  user: User; // Signed in user.
+
   editState = EditState.View;
   pending = new BehaviorSubject<Set<string>>(new Set());
+
+  castServer: BehaviorSubject<LiquidGalaxyServer>;
 
   constructor(
     private route: ActivatedRoute,
@@ -30,17 +42,46 @@ export class StoryDetailComponent implements OnInit {
     private userService: UserService,
     private storyService: StoryService,
     private snackBar: MdSnackBar,
+    private dialog: MdDialog,
+    private castService: CastService,
   ) {
     this.route.data.subscribe((params: { story: Story }) => {
       this.story = params.story;
     });
+    this.castServer = this.castService.active;
   }
 
   ngOnInit() {
-    this.userService.readUser(this.story.owner, ['photoURL']).subscribe((user: User) => {
-      this.owner = user;
-    });
+    this.storyService.readStory(this.story.$key)
+      .takeUntil(this.destroy)
+      .subscribe((story: Story) => {
+        if (this.editState === EditState.View) {
+          this.story = story;
+        }
+      });
+
+    // Read story owner user data.
+    this.userService.readUser(this.story.owner)
+      .first()
+      .subscribe((owner: User) => {
+        this.owner = owner;
+      });
+
+    // Read current signed in user data.
+    this.userService.readCurrentUser()
+      .takeUntil(this.destroy)
+      .subscribe((user: User) => {
+        this.user = user;
+      });
   }
+
+  ngOnDestroy() {
+    this.destroy.next(true);
+  }
+
+  /**
+   * Edit story.
+   */
 
   isActivelyEditing(): boolean {
     return this.editState === EditState.Edit;
@@ -69,17 +110,13 @@ export class StoryDetailComponent implements OnInit {
   }
 
   setPending(componentName: string) {
-    this.pending.first().subscribe((pending: Set<string>) => {
-      pending.add(componentName);
-      this.pending.next(pending);
-    });
+    this.pending.value.add(componentName);
+    this.pending.next(this.pending.value); // Mutated data structure. Send the same reference as a new update.
   }
 
   setUnpending(componentName: string) {
-    this.pending.first().subscribe((pending: Set<string>) => {
-      pending.delete(componentName);
-      this.pending.next(pending);
-    });
+    this.pending.value.delete(componentName);
+    this.pending.next(this.pending.value); // Mutated data structure. Send the same reference as a new update.
   }
 
   edit() {
@@ -88,24 +125,30 @@ export class StoryDetailComponent implements OnInit {
 
   cancel() {
     this.editState = EditState.Cancel;
-    const self = this;
-    this.pending.subscribe(function (pending: Set<string>) {
-      if (pending.size === 0) {
-        this.unsubscribe();
-        self.editState = EditState.View;
-      }
-    });
+
+    const cancelDone = new Subject<any>();
+    const stop = Observable.merge(cancelDone, this.destroy);
+    this.pending
+      .takeUntil(stop)
+      .filter((pending: Set<string>) => pending.size === 0)
+      .subscribe(() => {
+        cancelDone.next(true);
+        this.editState = EditState.View;
+      });
   }
 
   save() {
     this.editState = EditState.Save;
-    const self = this;
-    this.pending.subscribe(function (pending: Set<string>) {
-      if (pending.size === 0) {
-        this.unsubscribe();
-        self.updateStory();
-      }
-    });
+
+    const saveDone = new Subject<any>();
+    const stop = Observable.merge(saveDone, this.destroy);
+    this.pending
+      .takeUntil(stop)
+      .filter((pending: Set<string>) => pending.size === 0)
+      .subscribe(() => {
+        saveDone.next(true);
+        this.updateStory();
+      });
   }
 
   updateStory() {
@@ -113,6 +156,47 @@ export class StoryDetailComponent implements OnInit {
     this.storyService.updateStory(this.story).subscribe(() => {
       this.editState = EditState.View;
       this.snackBar.open('Saved!', null, { duration: 3000 });
+      this.story = new Story(this.story); // Simulate a real time update.
     });
+  }
+
+  /**
+   * Delete story.
+   */
+
+  delete() {
+    const dialogRef = this.dialog.open(ConfirmComponent, {
+      data: {
+        title: 'Delete story',
+        description: `You are about to delete "${this.story.title}".\n\nThis action cannot be undone!`,
+      },
+    });
+    dialogRef.afterClosed().subscribe((isConfirmed: boolean) => {
+      if (isConfirmed) {
+        this.deleteConfirmed();
+      }
+    });
+  }
+
+  deleteConfirmed() {
+    const journeyUid = this.story.journey; // Gather journey UID before the story is destroyed.
+    this.storyService.deleteStory(this.story).subscribe(
+      () => {
+        this.router.navigate([`/journeys/${journeyUid}`]);
+        this.snackBar.open('Deleted!', null, { duration: 3000 });
+      },
+      error => window.alert('An error has ocurred. Story was not deleted.'),
+    );
+  }
+
+  /**
+   * Misc.
+   */
+
+  isSignedUserTheOwner(): boolean {
+    if (!(this.user && this.owner)) {
+      return false;
+    }
+    return this.user.$key === this.owner.$key;
   }
 }

@@ -1,0 +1,10 @@
+<div class="media">
+  <ng-container *ngIf="isPhoto(currentMediaItem)">
+    <img [src]="currentMediaItem.url" />
+  </ng-container>
+  <div class="video-container" *ngIf="isVideo(currentMediaItem)">
+    <iframe [src]="'https://www.youtube.com/embed/' + currentMediaItem.url | safeResourceUrl"></iframe>
+  </div>
+  <a href="javascript:void(0)" class="arrow arrow-left" (click)="previous()">&#x2303;</a>
+  <a href="javascript:void(0)" class="arrow arrow-right" (click)="next()">&#x2303;</a>
+</div>

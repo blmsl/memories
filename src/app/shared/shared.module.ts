@@ -1,54 +1,51 @@
 import { NgModule } from '@angular/core';
-import { AngularFireAuth } from 'angularfire2/auth';
-import { AngularFireDatabase } from 'angularfire2/database';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { AngularFireAuthModule } from 'angularfire2/auth';
+import { AngularFireDatabaseModule } from 'angularfire2/database';
+import { ResponsiveModule } from 'ng2-responsive';
 
-import { CastModule } from './cast';
-import { NavbarModule, NavbarComponent } from './navbar';
-import { SidenavModule, SidenavComponent } from './sidenav';
+import {
+  ShowOnSignedInDirective,
+} from './directives';
 import {
   SafeHtmlPipe,
+  SafeResourceUrlPipe,
   SafeStylePipe,
+  SafeUrlPipe,
 } from './pipes';
-import {
-  AuthService,
-  FileService,
-  IdService,
-  JourneyService,
-  KmlService,
-  LocationService,
-  PwService,
-  StoryService,
-  UrlShortenerService,
-  UserService,
-} from './services';
 
 @NgModule({
   imports: [
-    CastModule,
-    NavbarModule,
-    SidenavModule,
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    RouterModule,
+    AngularFireAuthModule,
+    AngularFireDatabaseModule,
+    ResponsiveModule,
   ],
   exports: [
-    NavbarComponent,
-    SidenavComponent,
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    RouterModule,
+    AngularFireAuthModule,
+    AngularFireDatabaseModule,
+    ResponsiveModule,
+    ShowOnSignedInDirective,
+    SafeHtmlPipe,
+    SafeResourceUrlPipe,
+    SafeStylePipe,
+    SafeUrlPipe,
   ],
   declarations: [
+    ShowOnSignedInDirective,
     SafeHtmlPipe,
+    SafeResourceUrlPipe,
     SafeStylePipe,
-  ],
-  providers: [
-    AngularFireAuth,
-    AngularFireDatabase,
-    AuthService,
-    FileService,
-    IdService,
-    JourneyService,
-    KmlService,
-    LocationService,
-    PwService,
-    StoryService,
-    UrlShortenerService,
-    UserService,
+    SafeUrlPipe,
   ],
 })
 export class SharedModule { }

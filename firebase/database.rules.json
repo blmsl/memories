@@ -1,31 +1,39 @@
 {
   "rules": {
     "users": {
-       "$uid": { 
-         ".write": "newData.exists() && $uid === auth.uid",
-         ".validate": "newData.hasChildren(['displayName', 'email'])",
-         "displayName": {
-           ".read": true,
-           ".validate": "newData.val() === auth.token.name"
-         },
-         "email": {
-           ".read": "$uid === auth.uid",
-           ".validate": "newData.val() === auth.token.email"
-         },
-         "photoURL": {
-           ".read": true,
-           ".validate": "newData.val().matches(/^https:\\/\\/[a-z0-9]+\\.googleusercontent\\.com\\/.*\\.jpg$/)"
-         },
-         "$other": {
-           ".validate": false
+      ".read": true,
+      "$uid": {
+        ".write": "newData.exists() && $uid === auth.uid",
+        ".validate": "newData.hasChildren(['displayName', 'updatedAt'])",
+        "displayName": {
+          ".validate": "newData.val() === auth.token.name"
+        },
+        "photoURL": {
+          ".validate": "newData.val().matches(/^https:\\/\\/[a-z0-9]+\\.googleusercontent\\.com\\/.*\\.jpg$/)"
+        },
+        "updatedAt": {
+          ".validate": "newData.val() === now"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "usersPrivate": {
+      "$uid": {
+        ".write": "newData.exists() && $uid === auth.uid",
+        ".read": "$uid === auth.uid",
+        ".validate": "newData.hasChildren(['email'])",
+        "email": {
+          ".validate": "newData.val() === auth.token.email"
          }
-       }
+      }
     },
     "journeys": {
       ".read": true,
-      ".indexOn": ["updatedAt"],
+      ".indexOn": ["updatedAt", "owner"],
       "$uid": {
-        ".write": "auth !== null",
+        ".write": "auth !== null && (!data.exists() || data.child('owner').val() === auth.uid)",
         ".validate": "newData.hasChildren(['owner', 'title', 'updatedAt'])",
         "owner": {
           ".validate": "newData.val() === auth.uid && (!data.exists() || data.val() === auth.uid) && root.child('users/' + newData.val()).exists()"
@@ -48,7 +56,7 @@
       ".read": true,
       ".indexOn": ["journey"],
       "$uid": {
-        ".write": "auth !== null",
+        ".write": "auth !== null && (!data.exists() || data.child('owner').val() === auth.uid)",
         ".validate": "newData.hasChildren(['journey', 'owner', 'updatedAt', 'title'])",
         "journey": {
           ".validate": "newData.val().matches(/^[a-zA-Z0-9_-]+$/) && root.child('journeys/' + newData.val() + '/owner').val() === auth.uid"
@@ -82,7 +90,7 @@
         },
         "photos": {
           "$photoUid": {
-            ".validate": "$photoUid >= 0 && $photoUid < 10 && newData.hasChildren(['url', 'title'])",
+            ".validate": "newData.hasChildren(['url'])",
             "url": {
               ".validate": "newData.val().matches(/^https:\\/\\/firebasestorage.googleapis.com\\//)"
             },
@@ -90,7 +98,30 @@
               ".validate": "newData.isString()"
             }
           }
+        },
+        "videos": {
+          "$videoUid": {
+            ".validate": "newData.hasChildren(['id', 'type'])",
+            "id": {
+              ".validate": "newData.val().matches(/^[a-zA-Z0-9_-]{11}$/)"
+            },
+            "type": {
+              ".validate": "newData.val() === 'youtube'"
+            }
+          }
         }
+      }
+    },
+    "comments": {
+      ".read": true,
+      ".indexOn": ["story"],
+      "$uid": {
+        ".write": "(!data.exists() && newData.exists() && auth !== null) || (data.exists() && newData.exists() && auth !== null) || (data.exists() && !newData.exists() && (data.child('owner').val() === auth.uid || root.child('stories/' + data.child('story').val() + '/owner').val() === auth.uid))",
+        ".validate": "newData.child('story').val().matches(/^[a-zA-Z0-9_-]+$/) && root.child('stories/' + newData.child('story').val()).exists() &&    newData.child('owner').val() === auth.uid && (!data.child('owner').exists() || data.child('owner').val() === auth.uid) && root.child('users/' + newData.child('owner').val()).exists() &&    newData.child('updatedAt').val() === now &&    newData.child('description').isString()",
+        "story": {},
+        "owner": {},
+        "updatedAt": {},
+        "description": {}
       }
     },
     "physicalWeb": {

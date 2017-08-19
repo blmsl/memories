@@ -1,9 +1,12 @@
+/* tslint:disable:no-unused-variable */
+
 import { TestBed, async, inject } from '@angular/core/testing';
 import { Observable } from 'rxjs/Rx';
 import { AngularFireDatabase } from 'angularfire2/database';
 import { AngularFireAuth } from 'angularfire2/auth';
 
 import { JourneyService } from './journey.service';
+import { StoryService } from './story.service';
 import { FileService } from './file.service';
 import { IdService } from './id.service';
 import { Journey } from '../models';
@@ -34,6 +37,7 @@ describe('JourneyService', () => {
     TestBed.configureTestingModule({
       providers: [
         JourneyService,
+        StoryService,
         { provide: AngularFireDatabase, useClass: MockAngularFireDatabase },
         { provide: IdService, useClass: MockIdService },
         { provide: FileService, useClass: MockImageService },

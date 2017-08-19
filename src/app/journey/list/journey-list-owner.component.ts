@@ -6,7 +6,6 @@ import {
 } from '../../shared';
 
 @Component({
-  moduleId: module.id,
   selector: 'app-journey-list-owner',
   templateUrl: 'journey-list-owner.component.html',
 })
@@ -19,8 +18,10 @@ export class JourneyListOwnerComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.userService.readUser(this.owner, ['displayName']).subscribe((user: User) => {
-      this.ownerObj = user;
-    });
+    this.userService.readUser(this.owner)
+      .first()
+      .subscribe((user: User) => {
+        this.ownerObj = user;
+      });
   }
 }

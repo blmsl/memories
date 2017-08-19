@@ -2,7 +2,6 @@ dist: trusty
 language: node_js
 node_js:
   - '8'
-  - '7'
 
 branches:
   only:
@@ -25,6 +24,7 @@ install:
 script:
   - npm run lint
   - npm run build
+  - npm run test-firebase
   - npm run coverage
 
 after_success:

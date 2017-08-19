@@ -1,7 +1,59 @@
-<div class="add-photo-container" *ngIf="isEditing">
-  <button type="button" md-button>Add photo</button>
+<div class="add-photo-container" *ngIf="isEditing()">
+  <input
+    type="file"
+    class="file-input"
+    accept="image/x-png,image/gif,image/jpeg"
+    multiple="multiple"
+    (change)="addPhoto($event)"
+    #addPhotoInput />
+  <button md-button (click)="executeAddPhoto()" [disabled]="!isActivelyEditing()">Add photo</button>
+  <button md-button (click)="toggleVideoForm()" [disabled]="!isActivelyEditing()">Add video</button>
+
+  <form
+    class="add-video-form"
+    [formGroup]="videoForm"
+    (ngSubmit)="submitVideoForm()"
+    *ngIf="isVideoFormVisible">
+    <fieldset>
+      <md-input-container>
+        <input type="text" formControlName="url" placeholder="YouTube URL" mdInput />
+      </md-input-container>
+      <button type="submit" color="primary" [disabled]="!videoForm.valid" md-raised-button>
+        Add
+      </button>
+    </fieldset>
+  </form>
 </div>
 
 <div class="photos">
-  <img [src]="photo.url" *ngFor="let photo of story.photos" />
+  <div class="video" (click)="openGallery(i)" *ngFor="let video of storyVideos(); let i = index">
+    <a
+      href="javascript:void(0)"
+      class="video__delete"
+      (click)="deleteVideo(video)"
+      *ngIf="isEditing()">
+      <i class="fa fa-times"></i>
+    </a>
+    <img [src]="'https://img.youtube.com/vi/' + video.id + '/hqdefault.jpg'" />
+  </div>
+  <div class="photo" *ngFor="let photo of newPhotos">
+    <a
+      href="javascript:void(0)"
+      class="photo__delete"
+      (click)="deleteNewStoryPhoto(photo)"
+      *ngIf="isEditing()">
+      <i class="fa fa-times"></i>
+    </a>
+    <img [src]="photo.safeStyle" />
+  </div>
+  <div class="photo" (click)="openGallery(storyVideos().length + i)" *ngFor="let photo of storyPhotos(); let i = index">
+    <a
+      href="javascript:void(0)"
+      class="photo__delete"
+      (click)="deleteStoryPhoto(photo)"
+      *ngIf="isEditing()">
+      <i class="fa fa-times"></i>
+    </a>
+    <img [src]="photo.url" />
+  </div>
 </div>

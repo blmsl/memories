@@ -1,0 +1,25 @@
+@import "../shared/scss/conf/index";
+
+.box-notification {
+  display: block;
+  border-bottom: 1px solid $separator;
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+.eddystone {
+  margin-top: 10px;
+  margin-left: 15px;
+  width: 40px;
+  float: right;
+}
+
+@media (min-width: 400px) {
+  .eddystone {
+    width: 65px;
+  }
+}
+
+h2 {
+  margin-top: 2rem;
+}
